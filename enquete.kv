@@ -1,0 +1,117 @@
+#:kivy 1.10.0
+#:import pmdf pmdf
+
+<MenuScreen>:
+    BoxLayout:
+        orientation: "vertical"
+        size_hint: .5, .8
+        pos_hint: {'center_x': .5, "center_y": .5}
+
+        # title
+        Label:
+            text: "Enquete"
+            font_size: 48
+
+        Button:
+            size_hint: .8, .5
+            pos_hint: {'center_x': .5, "center_y": .5}
+            font_size: 30
+            text: "Open"
+            on_press: root.openFileChooser()
+
+
+<OpenDialog>:
+    BoxLayout:
+        orientation: "vertical"
+        FileChooserListView:
+            id: filechooser
+            path: app.user_data_dir
+            filters: ["*.pmdf"]
+
+        BoxLayout:
+            size_hint_y: .1
+            Button:
+                font_size: 30
+                text: "Load"
+                on_release: root.load(filechooser.path, filechooser.selection)
+
+            Button:
+                font_size: 30
+                text: "Cancel"
+                on_release: root.cancel()
+
+
+[DataItem@SelectableDataItem+BoxLayout+DataItemCanel]:
+    height: 100
+    size_hint_y: None
+    Label:
+        size_hint_x: .4
+        font_size: 30
+        text: str(ctx.key)
+
+    TextInput:
+        size_hint_x: .6*(len(ctx.rest.confineList)==0)
+        width: 0
+        font_size: 30
+        text: str(ctx.value)
+        on_text: root.valueVal = self.text
+
+    DropDownInput:
+        size_hint_x: .6*(len(ctx.rest.confineList)!=0)
+        font_size: 30
+        text: str(ctx.value)
+        labels: ctx.rest.confineList
+        on_text: root.valueVal = self.text
+
+
+[IndexItem@SelectableDataItem+StackLayout]:
+    height: 100
+    size_hint_y: None
+    ListItemButton:
+        text: str(ctx.id)
+        font_size: 30
+        on_release: ctx.load_data(ctx.index, self.is_selected)
+
+
+<ToolBar>:
+    size_hint_y: .1
+    #Button:
+    #    font_size: 30
+    #    text: "New"
+    #    on_release: root.new_data()
+    
+    Button:
+        font_size: 30
+        text: "Delete"
+        on_release: root.del_data()
+
+    Button:
+        font_size: 30
+        text: "Save"
+        on_release: root.save_data()
+
+
+<WarningPopup>:
+    size_hint: .8, .5
+    title: "WARNING"
+    BoxLayout:
+        orientation: "vertical"
+        Label:
+            text: root.warnTxt
+            size_hint: .8, .8
+            pos_hint: {'center_x': .5}
+
+        BoxLayout:
+            size_hint: .8, .2
+            pos_hint: {'center_x': .5}
+            Button:
+                text: "OK"
+                on_release: 
+                    root.onok()
+                    root.dismiss()
+
+            Button:
+                text: "Cancel"
+                on_release: 
+                    root.oncancel()
+                    root.dismiss()

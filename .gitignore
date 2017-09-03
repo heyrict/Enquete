@@ -1,0 +1,10 @@
+# build folder
+.buildozer
+bin/
+
+# data for test
+*.csv
+*.pmdf
+
+# python cache folder
+__pycache__
