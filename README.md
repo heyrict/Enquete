@@ -17,3 +17,12 @@ After all the dependencies are installed,
 you can run `buildozer android debug` to build a
 debug version, or `buildozer android release` to
 build a release version.
+
+Contribute
+----------
+1. Folk this program to your own repository
+2. Add a new branch indicating your changes to make.
+3. Clone your folk to your local machine.
+4. Do some changes.
+5. Push your changes to your folked git repository.
+6. Add a new pull request.
