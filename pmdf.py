@@ -15,10 +15,10 @@ class PMDFParser(object):
     def parse(self):
         pmdf = PMDF()
         for l in self.fs.splitlines():
-            expr = re.split(" +",l.strip(),2)
+            expr = re.split(r"(?<!\\) +",l.strip())
             if len(expr) < 2:
                 raise ValueError("Line `"+expr+"` too short")
-            pmdf.getField(expr[0], expr[1], expr[2] if len(expr) > 2 else "")
+            pmdf.getFieldAll(expr[0], expr[1], expr[2:] if len(expr) > 2 else "")
         return pmdf
 
 
@@ -26,6 +26,7 @@ class AbstractRestriction(object):
     def __init__(self, restrictionString):
         #if restrictionString == "": return
         self.confineList = []
+        self.errstr = ""
         self._restriction = self.parse(restrictionString)
 
     def parse(self, restrictionString):
@@ -38,6 +39,24 @@ class AbstractRestriction(object):
         return False
 
 
+class PMStrRegexRestriction(AbstractRestriction):
+    def parse(self, restrictionString):
+        self.errstr = "doesn't match '%s'"%restrictionString
+        return restrictionString
+
+    def fit(self, value):
+        return bool(re.match(self._restriction, value))
+
+
+class PMNotNullRestriction(AbstractRestriction):
+    def __init__(self):
+        self.errstr = "cannot be null"
+        self.confineList = []
+
+    def fit(self, value):
+        return (not value == "")
+
+
 class FakeRestriction(AbstractRestriction):
     def fit(self, value):
         return True
@@ -47,6 +66,7 @@ class PMNumRangeRestriction(AbstractRestriction):
     QUARK = 1E-10
 
     def parse(self, restStr):
+        self.errstr = "not in %s" % restStr
         restriction = []
         for pat in re.findall("[\[(][0-9]*,[0-9]*[)\]]",restStr):
             head, tail = pat.split(',')
@@ -62,6 +82,7 @@ class PMNumRangeRestriction(AbstractRestriction):
 
 class PMStrRangeRestriction(AbstractRestriction):
     def parse(self, restStr):
+        self.errstr = "not in %s" % restStr
         self.confineList = eval(restStr)
         return self.confineList
 
@@ -88,20 +109,32 @@ class PMDF(object):
         self.filter_dict = filterdict
         self.field_list = []
 
-    def getField(self, fieldname, type_of_field, restrictionString=""):
+    def getFieldAll(self, fieldname, type_of_field, restrictions=[]):
         if fieldname in self.filter_dict:
             raise ValueError("Field "+fieldname+" already exists")
 
         type_of_field = self.caster_type(type_of_field)
-        rest = None
-        if restrictionString == "": rest = FakeRestriction("")
-        elif type_of_field in [int, float]:
-            rest = PMNumRangeRestriction(restrictionString)
+        rest = []
+        if restrictions == []: rest = [FakeRestriction("")]
         else:
-            rest = PMStrRangeRestriction(restrictionString)
+            for restrictionString in restrictions:
+                rest.append(self.getRestrictionFromString(restrictionString, type_of_field))
 
         self.field_list.append(fieldname)
         self.filter_dict[fieldname] = [type_of_field,rest]
+
+    def getRestrictionFromString(self, restrictionString, type_of_field):
+        if restrictionString.lower() == "not_null":
+            return PMNotNullRestriction()
+
+        if type_of_field in (int, float):
+            try: return PMNumRangeRestriction(restrictionString)
+            except: return PMStrRangeRestriction(restrictionString)
+        else:
+            if re.match("\[.*\]", restrictionString):
+                return PMStrRangeRestriction(restrictionString)
+            else:
+                return PMStrRegexRestriction(restrictionString)
 
     def getRestriction(self, fieldname):
         if fieldname not in self.field_list: return None
@@ -116,10 +149,11 @@ class PMDF(object):
 
     def filter(self, fieldname, data):
         data = self.filter_dict[fieldname][0](data)
-        if self.filter_dict[fieldname][1].fit(data):
-            return data
-        else:
-            raise ValueError("Value %s doesn't satisfy restriction"%fieldname)
+        for rest in self.filter_dict[fieldname][1]:
+            if not rest.fit(data):
+                errstr = rest.errstr if rest.errstr else "doesn't satisfy restriction"
+                raise ValueError("Field `%s` %s"%(fieldname,errstr))
+        return data
 
     def filter_all(self, ser):
         if isinstance(ser, dict):
