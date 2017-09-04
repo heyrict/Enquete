@@ -163,9 +163,16 @@ class MainScreen(Screen):
         self.box = BoxLayout()
         self.add_widget(self.box)
 
+        def getStrRangeInd(obj):
+            try: strRangeInd = [type(i) for i in self.data_filter.getRestriction(
+                obj[0])].index(pmdf.PMStrRangeRestriction)
+            except ValueError: strRangeInd = -1
+            return strRangeInd
+
         self.data_args_converter = lambda row_index, obj: {
                 'key': obj[0],
                 'value': obj[1],
+                'strRangeInd': getStrRangeInd(obj),
                 'rest': self.data_filter.getRestriction(obj[0])}
         self.index_args_converter = lambda row_index, obj: {
                 'id': obj[self.data_filter.field_list[0]],
