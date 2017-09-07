@@ -52,13 +52,13 @@
     TextInput:
         size_hint_x: .6*(ctx.strRangeInd==-1)
         width: 0
-        font_size: 30
+        font_size: 30*(ctx.strRangeInd==-1)
         text: str(ctx.value)
         on_text: root.valueVal = self.text
 
     DropDownInput:
         size_hint_x: .6*(ctx.strRangeInd!=-1)
-        font_size: 30
+        font_size: 30*(ctx.strRangeInd!=-1)
         text: str(ctx.value)
         labels: ctx.rest[ctx.strRangeInd].confineList if len(ctx.rest)>0 else []
         on_text: root.valueVal = self.text

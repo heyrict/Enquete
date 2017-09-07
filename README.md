@@ -3,6 +3,13 @@ Enquete
 A kivy-based application for better
 handling simple-table constraints.
 
+Usage
+-----
+1. Open a `.pmdf` file
+2. Create a table
+
+Notice: You can only create **ONE Table** with a pmdf file.
+
 Compile
 -------
 You must have the following things to compile this program:

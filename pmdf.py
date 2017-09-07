@@ -18,6 +18,11 @@ class PMDFParser(object):
             expr = re.split(r"(?<!\\) +",l.strip())
             if len(expr) < 2:
                 raise ValueError("Line `"+expr+"` too short")
+
+            # convert "\ " back to " "
+            for i in range(len(expr)):
+                expr[i] = re.sub(r"\ "," ",expr[i])
+
             pmdf.getFieldAll(expr[0], expr[1], expr[2:] if len(expr) > 2 else "")
         return pmdf
 
